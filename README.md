@@ -36,6 +36,12 @@ Dynamic engines (`pki/`, `database/`) come when something needs them.
 - **Who reads:** a namespace's Kubernetes auth role reads only
   `<engine>/<namespace>/*`. A repo's JWT role reads only `ci/<repo>/*`. There
   is no global reader.
+- **Shared secrets: one secret, one path, never a copy.** A credential more
+  than one consumer uses lives once, at `<engine>/shared/<name>`
+  (`platform/shared/cloudflare-dns`, `ci/shared/rustfs`), and each consumer's
+  policy grants it by name, next to its own paths. Never `shared/*` whole:
+  who shares what is written in the policies, and reviewed in their PRs.
+  Rotating it is one write, and every consumer follows.
 - **Who writes:** whoever holds the secret, the operator or a rotation job.
   Never this repo: it defines engines, roles and policies, never values.
 
