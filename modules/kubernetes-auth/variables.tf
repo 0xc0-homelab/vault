@@ -20,4 +20,13 @@ variable "roles" {
     token_ttl        = optional(number, 3600)
   }))
   default = {}
+
+  # A role admits one namespace and named service accounts, never a wildcard:
+  # "*" would let any namespace read what the role reads.
+  validation {
+    condition = alltrue([
+      for r in values(var.roles) : r.namespace != "*" && length(r.service_accounts) > 0 && !contains(r.service_accounts, "*")
+    ])
+    error_message = "A Kubernetes auth role binds one namespace and named service accounts, never \"*\"."
+  }
 }
