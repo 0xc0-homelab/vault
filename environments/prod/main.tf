@@ -18,6 +18,14 @@ module "policies" {
   policy = file("${path.root}/../../policies/${each.value}")
 }
 
+# How the cluster's workloads get in: Vault Secrets Operator, per namespace.
+module "kubernetes_auth" {
+  source = "../../modules/kubernetes-auth"
+
+  roles = var.kubernetes_roles
+}
+
+# One KV engine per trust boundary (README.md, Secrets).
 module "kv" {
   source   = "../../modules/kv"
   for_each = var.kv_engines

@@ -1,6 +1,6 @@
 # The vault repo's CI, planning a PR: it reads the configuration it manages
-# (its own auth method, the policies, the mounts), to diff it, and changes
-# nothing. No secret, and no other auth method's configuration.
+# (its auth methods, JWT and Kubernetes, the policies, the mounts), to diff
+# it, and changes nothing. No secret.
 
 path "sys/auth" {
   capabilities = ["read"]
@@ -9,6 +9,9 @@ path "sys/auth/*" {
   capabilities = ["read"]
 }
 path "auth/jwt/*" {
+  capabilities = ["read", "list"]
+}
+path "auth/kubernetes/*" {
   capabilities = ["read", "list"]
 }
 

@@ -28,7 +28,14 @@ jwt_roles = {
   }
 }
 
-# The cluster's secrets, for External Secrets Operator to read.
+# One KV v2 engine per trust boundary (operator decision, 2026-09-30). Paths
+# inside are <owner>/<name>: the namespace or the repo, then the secret.
 kv_engines = {
-  secret = "The cluster's secrets, read by External Secrets Operator"
+  platform = "The cluster's shared services, one path per namespace, read by Vault Secrets Operator"
+  apps     = "The applications, one path per namespace, read by Vault Secrets Operator"
+  ci       = "The pipelines, one path per repo, read by that repo's CI jobs over JWT"
 }
+
+# Vault Secrets Operator's way in, one role per namespace. None yet: each comes
+# with the first secret of its namespace.
+kubernetes_roles = {}

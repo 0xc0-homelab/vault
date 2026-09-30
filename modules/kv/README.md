@@ -1,7 +1,8 @@
 # kv
 
-A KV secrets engine, version 2. External Secrets Operator reads it for the
-cluster's applications.
+A KV secrets engine, version 2, with `prevent_destroy`: recreating a mount
+deletes every secret in it. Vault Secrets Operator reads them into the
+cluster.
 
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
