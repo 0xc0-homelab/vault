@@ -45,6 +45,27 @@ Dynamic engines (`pki/`, `database/`) come when something needs them.
 - **Who writes:** whoever holds the secret, the operator or a rotation job.
   Never this repo: it defines engines, roles and policies, never values.
 
+## Writing a secret
+
+The operator writes, over WARP, with a token that may. Nothing a secret or a
+token holds ever reaches a screen, a shell history or a command line:
+
+- `vault login -no-print`: `vault login` alone prints the token it stores.
+- The value on stdin, `key=-`, straight from where it lives, never pasted:
+
+```sh
+cd ~/git/github/0xc0-homelab/workspace/infrastructure
+K='sudo /var/lib/rancher/rke2/bin/kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml -n vault exec -i vault-0 --'
+ssh -t -i ~/.ssh/0xc0-homelab ops@10.10.4.21 "${K/exec -i/exec -it} vault login -no-print"
+
+mise exec -- sops decrypt --extract '["CLOUDFLARE_API_TOKEN"]' secrets/tofu.sops.yaml \
+  | ssh -i ~/.ssh/0xc0-homelab ops@10.10.4.21 "$K vault kv put -mount=platform shared/cloudflare api_token=-"
+ssh -i ~/.ssh/0xc0-homelab ops@10.10.4.21 "$K vault kv metadata put -mount=platform \
+  -custom-metadata=owner=operator -custom-metadata=rotated_at=$(date +%F) shared/cloudflare"
+
+ssh -i ~/.ssh/0xc0-homelab ops@10.10.4.21 "$K rm -f /home/vault/.vault-token"
+```
+
 ## How CI gets in
 
 No Vault credential is stored anywhere. Each job logs in with the OIDC token
