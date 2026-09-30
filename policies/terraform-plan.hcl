@@ -1,6 +1,6 @@
 # The vault repo's CI, planning a PR: it reads the configuration it manages
 # (its auth methods, JWT and Kubernetes, the policies, the mounts), to diff
-# it, and changes nothing. No secret.
+# it, and changes nothing. No secret, but for its own state's.
 
 path "sys/auth" {
   capabilities = ["read"]
@@ -35,4 +35,9 @@ path "sys/policy" {
 }
 path "sys/policy/*" {
   capabilities = ["read", "list"]
+}
+
+# RustFS, this repo's OpenTofu state: the only secret it reads.
+path "ci/data/shared/rustfs" {
+  capabilities = ["read"]
 }

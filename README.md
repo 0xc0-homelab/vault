@@ -66,6 +66,25 @@ ssh -i ~/.ssh/0xc0-homelab ops@10.10.4.21 "$K vault kv metadata put -mount=platf
 ssh -i ~/.ssh/0xc0-homelab ops@10.10.4.21 "$K rm -f /home/vault/.vault-token"
 ```
 
+## Loading the CI's secrets from SOPS, once
+
+Every secret moves to Vault and SOPS goes away (operator decision,
+2026-10-01). `scripts/load-from-sops` reads each key of the SOPS files in
+`.github` and `infrastructure` into memory and writes it to its `ci/` path as
+JSON on stdin, with `owner` and `rotated_at=bootstrap`. It prints only paths
+and key counts:
+
+```sh
+cd ~/git/github/0xc0-homelab/workspace/vault
+export VAULT_ADDR=https://vault.int.0xc0.cc
+mise exec -- vault login -no-print          # a token that may write ci/
+mise exec -- scripts/load-from-sops
+rm -f ~/.vault-token
+```
+
+Then the operator rotates each secret by hand, here, and every consumer
+follows.
+
 ## How CI gets in
 
 No Vault credential is stored anywhere. Each job logs in with the OIDC token
@@ -77,7 +96,19 @@ workflows in `0xc0-homelab/.github`):
 | `terraform-plan` | any ref of this repo, through `.github`'s plan workflow on `main`: a PR's plan | `terraform-plan`: reads its own configuration |
 | `terraform` | `main`, through `.github`'s run workflow on `main`, inside the `production` environment, after the operator's approval | `terraform`: manages the configuration |
 
-Neither policy grants a stored secret. `terraform` can still rewrite any policy,
+The other repos' CI reads its secrets with one role per repo:
+
+| Role | Who | Policy |
+|---|---|---|
+| `github` | `.github`, from any of its own reusable workflows on `main` | `ci-github`: `ci/github/*`, `ci/shared/rustfs` |
+| `infrastructure` | `infrastructure`, from any of `.github`'s reusable workflows on `main` | `ci-infrastructure`: `ci/infrastructure/*`, `ci/shared/rustfs`, `ci/shared/cloudflare` |
+
+A plan and a real run read the same secrets, so one role serves both: what
+changes infrastructure still waits for the `production` environment's
+approval, not for Vault.
+
+Neither of this repo's own policies grants a stored secret, but for its
+state's (`ci/shared/rustfs`). `terraform` can still rewrite any policy,
 its own included, so it is effectively an admin: what guards it is its role's
 binding and the operator's approval of every run from `main`.
 

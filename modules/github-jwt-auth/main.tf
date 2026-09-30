@@ -22,7 +22,7 @@ resource "vault_jwt_auth_backend_role" "main" {
   role_type = "jwt"
 
   bound_audiences   = [var.audience]
-  bound_claims_type = "string"
+  bound_claims_type = each.value.claims_type
   bound_claims      = each.value.bound_claims
   # One entity per calling workflow: the reusable workflow and its ref.
   user_claim = "job_workflow_ref"

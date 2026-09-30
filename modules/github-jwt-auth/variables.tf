@@ -19,12 +19,20 @@ variable "roles" {
   description = "Roles by name: the claims a token must match exactly, the policies it gets, and its TTL in seconds."
   type = map(object({
     bound_claims = map(string)
-    policies     = list(string)
-    token_ttl    = optional(number, 1200)
+    # "string": every claim must match exactly; "glob": * matches, in every
+    # claim of the role.
+    claims_type = optional(string, "string")
+    policies    = list(string)
+    token_ttl   = optional(number, 1200)
   }))
 
   validation {
     condition     = alltrue([for r in values(var.roles) : contains(keys(r.bound_claims), "repository")])
     error_message = "Every role must bind the repository claim: without it, any repository on GitHub could log in."
+  }
+
+  validation {
+    condition     = alltrue([for r in values(var.roles) : contains(["string", "glob"], r.claims_type) && !strcontains(r.bound_claims["repository"], "*")])
+    error_message = "claims_type is string or glob, and the repository claim is never a glob."
   }
 }
