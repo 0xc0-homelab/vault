@@ -7,6 +7,7 @@ variable "jwt_roles" {
   description = "The JWT auth roles, by name: the claims a token must match, its policies, and its TTL in seconds."
   type = map(object({
     bound_claims = map(string)
+    claims_type  = optional(string, "string")
     policies     = list(string)
     token_ttl    = optional(number, 1200)
   }))

@@ -26,6 +26,28 @@ jwt_roles = {
     }
     policies = ["terraform"]
   }
+
+  # The other repos' CI (operator decision, 2026-10-01: every secret in
+  # Vault, no SOPS): each job reads its repo's ci/<repo>/* and the shared
+  # secrets it uses, from any of .github's reusable workflows on main. Reading
+  # them writes nothing: what changes infrastructure still waits for the
+  # production environment's approval.
+  "github" = {
+    claims_type = "glob"
+    bound_claims = {
+      repository       = "0xc0-homelab/.github"
+      job_workflow_ref = "0xc0-homelab/.github/.github/workflows/*@refs/heads/main"
+    }
+    policies = ["ci-github"]
+  }
+  "infrastructure" = {
+    claims_type = "glob"
+    bound_claims = {
+      repository       = "0xc0-homelab/infrastructure"
+      job_workflow_ref = "0xc0-homelab/.github/.github/workflows/*@refs/heads/main"
+    }
+    policies = ["ci-infrastructure"]
+  }
 }
 
 # One KV v2 engine per trust boundary (operator decision, 2026-09-30). Paths
