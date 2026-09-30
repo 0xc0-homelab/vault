@@ -1,0 +1,31 @@
+# vault
+
+The OpenTofu configuration of the cluster's Vault: auth methods and roles,
+policies, secret engines. Vault is deployed by `gitops` (`platform/vault`), so
+this repo is downstream of it: `.github → infrastructure → gitops → vault →
+app-*`.
+
+## CURRENT PHASE: 3 (Platform)
+
+Phase 3 brings Vault, OIDC and the move off SOPS (.github#6). See the
+workspace `docs/design.md`.
+
+## Hard rules
+
+- Everything written is in English: files, file names, comments, commits,
+  branches and PRs.
+- No work without an issue on the org project board. The PR links it
+  (`Closes #N` / `Refs owner/repo#N`) or the `issue` check fails.
+- OpenTofu only as modules: `modules/<name>/` for resources,
+  `environments/<env>/` for roots, which only call modules.
+- **No secret value ever goes into this repo, nor into Vault from here.** This
+  repo configures Vault; secrets are written by whoever owns them. A policy
+  for this repo's CI never grants access to stored secrets.
+- **No Vault token is stored.** The CI logs in with GitHub's OIDC token (JWT).
+  The `terraform` role binds `ref` and `environment`: only `main`, behind the
+  operator's approval, writes.
+- Nothing changes Vault from a laptop but the one bootstrap (README.md): the
+  first run, by the operator, with the root token, over WARP. From then on,
+  only the pipeline. Plans by hand go over WARP with a short-lived token.
+- The root token is for that bootstrap only, then revoked.
+- Tools come from `mise.toml`, pinned. Nothing system-wide.

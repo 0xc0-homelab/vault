@@ -1,0 +1,26 @@
+# Runs on every PR, with no paths filter on purpose: if this check becomes
+# required, a PR the workflow never started for could never merge. PRs that
+# touch no OpenTofu finish green without planning.
+name: plan
+
+on:
+  pull_request:
+    branches: [main]
+
+# id-token: the job logs in to Vault with GitHub's OIDC token.
+permissions:
+  contents: read
+  pull-requests: write
+  id-token: write
+
+jobs:
+  plan:
+    uses: 0xc0-homelab/.github/.github/workflows/tofu-plan.yml@main
+    with:
+      working-directory: environments/prod
+      paths: '^(environments/|modules/|policies/|mise\.toml$|\.github/workflows/(plan|apply)\.yml$)'
+      # Read-only: any ref of this repo, so a PR can plan (policies/terraform-plan.hcl).
+      vault-addr: https://vault.int.0xc0.cc
+      vault-role: terraform-plan
+    secrets:
+      SOPS_AGE_KEY: ${{ secrets.SOPS_AGE_KEY }}
