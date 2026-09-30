@@ -36,6 +36,18 @@ kv_engines = {
   ci       = "The pipelines, one path per repo, read by that repo's CI jobs over JWT"
 }
 
-# Vault Secrets Operator's way in, one role per namespace. None yet: each comes
-# with the first secret of its namespace.
-kubernetes_roles = {}
+# Vault Secrets Operator's way in, one role per namespace, named after it: the
+# namespace's vault-secrets service account (gitops, <component>/vault-secrets.yaml)
+# and the policy of the same name.
+kubernetes_roles = {
+  "cert-manager" = {
+    namespace        = "cert-manager"
+    service_accounts = ["vault-secrets"]
+    policies         = ["cert-manager"]
+  }
+  "external-dns" = {
+    namespace        = "external-dns"
+    service_accounts = ["vault-secrets"]
+    policies         = ["external-dns"]
+  }
+}
