@@ -12,6 +12,18 @@ variable "jwt_roles" {
   }))
 }
 
+variable "kubernetes_roles" {
+  description = "Kubernetes auth roles, one per namespace, named after it: the namespace, its service accounts, their audience, its policies and TTL."
+  type = map(object({
+    namespace        = string
+    service_accounts = list(string)
+    audience         = optional(string, "vault")
+    policies         = list(string)
+    token_ttl        = optional(number, 3600)
+  }))
+  default = {}
+}
+
 variable "kv_engines" {
   description = "KV v2 secrets engines, by mount path, each with what it holds."
   type        = map(string)
