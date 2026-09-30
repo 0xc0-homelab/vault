@@ -1,0 +1,34 @@
+# Applies environments/prod after a merge to main, once the operator approves
+# the production environment.
+name: apply
+
+# Only when OpenTofu could change something. Run it by hand otherwise.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'environments/**'
+      - 'modules/**'
+      - 'policies/**'
+      - 'mise.toml'
+      - '.github/workflows/plan.yml'
+      - '.github/workflows/apply.yml'
+  workflow_dispatch:
+
+# id-token: the job logs in to Vault with GitHub's OIDC token.
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  apply:
+    uses: 0xc0-homelab/.github/.github/workflows/tofu-apply.yml@main
+    with:
+      working-directory: environments/prod
+      environment: production
+      # Read-write: only from main, inside the production environment, which
+      # waits for the operator's approval (policies/terraform.hcl).
+      vault-addr: https://vault.int.0xc0.cc
+      vault-role: terraform
+    secrets:
+      SOPS_AGE_KEY: ${{ secrets.SOPS_AGE_KEY }}
