@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
-# Runs tofu against one environment with the secrets decrypted into the
-# environment only, never onto disk.
+# Runs tofu against one environment, with the state's credentials read from
+# Vault (ci/shared/rustfs) into the environment only, never onto disk. Over
+# WARP, logged in to Vault (vault login -no-print), whose token the vault
+# provider uses too.
 # Usage: scripts/tofu <environment> <tofu args...>   e.g. scripts/tofu prod plan
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -9,8 +11,15 @@ env="${1:?usage: scripts/tofu <environment> <tofu args...>}"
 shift
 [ -d "environments/$env" ] || { echo "no such environment: environments/$env" >&2; exit 1; }
 
+export VAULT_ADDR="${VAULT_ADDR:-https://vault.int.0xc0.cc}"
+vault token lookup >/dev/null || { echo "not logged in to Vault: vault login -no-print" >&2; exit 1; }
+
+AWS_ACCESS_KEY_ID="$(vault kv get -mount=ci -field=access_key_id shared/rustfs)"
+AWS_SECRET_ACCESS_KEY="$(vault kv get -mount=ci -field=secret_access_key shared/rustfs)"
+export AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY
+
 # Wait for CI to release the state lock rather than failing straight away.
 export TF_CLI_ARGS_plan="${TF_CLI_ARGS_plan:--lock-timeout=5m}"
 export TF_CLI_ARGS_apply="${TF_CLI_ARGS_apply:--lock-timeout=5m}"
 
-exec sops exec-env secrets/tofu.sops.yaml "tofu -chdir=environments/$env $(printf '%q ' "$@")"
+exec tofu -chdir="environments/$env" "$@"

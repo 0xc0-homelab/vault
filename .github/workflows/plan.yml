@@ -22,5 +22,7 @@ jobs:
       # Read-only: any ref of this repo, so a PR can plan (policies/terraform-plan.hcl).
       vault-addr: https://vault.int.0xc0.cc
       vault-role: terraform-plan
-    secrets:
-      SOPS_AGE_KEY: ${{ secrets.SOPS_AGE_KEY }}
+      # The state's credentials, from Vault: this repo has no SOPS file.
+      vault-secrets: |
+        ci/data/shared/rustfs access_key_id | AWS_ACCESS_KEY_ID ;
+        ci/data/shared/rustfs secret_access_key | AWS_SECRET_ACCESS_KEY ;

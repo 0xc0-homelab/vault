@@ -8,10 +8,11 @@ roles, policies, secret engines. Vault itself is deployed by `gitops`
 environments/prod/   the root: only calls modules
 modules/             github-jwt-auth, policy, kv
 policies/            one ACL policy per file, named after it
-secrets/             tofu.sops.yaml: the RustFS state keys
+scripts/             tofu (local runs, credentials from Vault), load-from-sops
 ```
 
-State: `homelab/vault/prod.tfstate` in RustFS.
+State: `homelab/vault/prod.tfstate` in RustFS, whose credentials come from
+Vault itself (`ci/shared/rustfs`): no SOPS file here.
 
 ## Secrets: the standard
 
