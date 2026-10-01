@@ -70,9 +70,13 @@ ssh -i ~/.ssh/0xc0-homelab ops@10.10.4.21 "$K rm -f /home/vault/.vault-token"
 
 Every secret moves to Vault and SOPS goes away (operator decision,
 2026-10-01). `scripts/load-from-sops` reads each key of the SOPS files in
-`.github` and `infrastructure` into memory and writes it to its `ci/` path as
-JSON on stdin, with `owner` and `rotated_at=bootstrap`. It prints only paths
-and key counts:
+`.github` and `infrastructure` into memory and writes it to its path as JSON
+on stdin, with `owner` and `rotated_at=bootstrap`: under `ci/` what the
+pipelines read, under `platform/` what the cluster's components read through
+Vault Secrets Operator (CrowdSec's keys, the UI basic auth). It prints only
+paths and key counts, and it is safe to run again: a path a secret moved away
+from is removed.
+
 
 ```sh
 cd ~/git/github/0xc0-homelab/workspace/vault

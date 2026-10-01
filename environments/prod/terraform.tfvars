@@ -72,4 +72,19 @@ kubernetes_roles = {
     service_accounts = ["vault-secrets"]
     policies         = ["external-dns"]
   }
+  "crowdsec" = {
+    namespace        = "crowdsec"
+    service_accounts = ["vault-secrets"]
+    policies         = ["crowdsec"]
+  }
+  "traefik" = {
+    namespace        = "traefik"
+    service_accounts = ["vault-secrets"]
+    policies         = ["traefik"]
+  }
+  "longhorn-system" = {
+    namespace        = "longhorn-system"
+    service_accounts = ["vault-secrets"]
+    policies         = ["longhorn-system"]
+  }
 }
