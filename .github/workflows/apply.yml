@@ -30,7 +30,7 @@ jobs:
       # waits for the operator's approval (policies/terraform.hcl).
       vault-addr: https://vault.int.0xc0.cc
       vault-role: terraform
-      # The state's credentials, from Vault: this repo has no SOPS file.
+      # The state's credentials, from Vault.
       vault-secrets: |
         ci/data/shared/rustfs access_key_id | AWS_ACCESS_KEY_ID ;
         ci/data/shared/rustfs secret_access_key | AWS_SECRET_ACCESS_KEY ;

@@ -28,7 +28,7 @@ jwt_roles = {
   }
 
   # The other repos' CI (operator decision, 2026-10-01: every secret in
-  # Vault, no SOPS): each job reads its repo's ci/<repo>/* and the shared
+  # Vault): each job reads its repo's ci/<repo>/* and the shared
   # secrets it uses, from any of .github's reusable workflows on main. Reading
   # them writes nothing: what changes infrastructure still waits for the
   # production environment's approval.
