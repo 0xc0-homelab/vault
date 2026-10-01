@@ -8,11 +8,11 @@ roles, policies, secret engines. Vault itself is deployed by `gitops`
 environments/prod/   the root: only calls modules
 modules/             github-jwt-auth, policy, kv
 policies/            one ACL policy per file, named after it
-scripts/             tofu (local runs, credentials from Vault), load-from-sops
+scripts/             tofu (local runs, credentials from Vault)
 ```
 
 State: `homelab/vault/prod.tfstate` in RustFS, whose credentials come from
-Vault itself (`ci/shared/rustfs`): no SOPS file here.
+Vault itself (`ci/shared/rustfs`).
 
 ## Secrets: the standard
 
@@ -46,49 +46,62 @@ Dynamic engines (`pki/`, `database/`) come when something needs them.
 - **Who writes:** whoever holds the secret, the operator or a rotation job.
   Never this repo: it defines engines, roles and policies, never values.
 
-## Writing a secret
+## Writing or rotating a secret
 
-The operator writes, over WARP, with a token that may. Nothing a secret or a
-token holds ever reaches a screen, a shell history or a command line:
+The operator writes, from the laptop over WARP, with a token that may. Nothing
+a secret or a token holds ever reaches a screen, a shell history or a command
+line:
 
 - `vault login -no-print`: `vault login` alone prints the token it stores.
-- The value on stdin, `key=-`, straight from where it lives, never pasted:
+- The value on stdin, `key=-`, straight from where it is issued: a file
+  downloaded from the provider, deleted right after, or `read -rs` for one shown
+  on a web page. Never pasted into the command.
+- `kv patch` changes one key and keeps the others; `kv put` writes a new
+  secret whole. Then `rotated_at`, so the next rotation knows how old it is.
 
 ```sh
-cd ~/git/github/0xc0-homelab/workspace/infrastructure
-K='sudo /var/lib/rancher/rke2/bin/kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml -n vault exec -i vault-0 --'
-ssh -t -i ~/.ssh/0xc0-homelab ops@10.10.4.21 "${K/exec -i/exec -it} vault login -no-print"
-
-mise exec -- sops decrypt --extract '["CLOUDFLARE_API_TOKEN"]' secrets/tofu.sops.yaml \
-  | ssh -i ~/.ssh/0xc0-homelab ops@10.10.4.21 "$K vault kv put -mount=platform shared/cloudflare api_token=-"
-ssh -i ~/.ssh/0xc0-homelab ops@10.10.4.21 "$K vault kv metadata put -mount=platform \
-  -custom-metadata=owner=operator -custom-metadata=rotated_at=$(date +%F) shared/cloudflare"
-
-ssh -i ~/.ssh/0xc0-homelab ops@10.10.4.21 "$K rm -f /home/vault/.vault-token"
-```
-
-## Loading the CI's secrets from SOPS, once
-
-Every secret moves to Vault and SOPS goes away (operator decision,
-2026-10-01). `scripts/load-from-sops` reads each key of the SOPS files in
-`.github` and `infrastructure` into memory and writes it to its path as JSON
-on stdin, with `owner` and `rotated_at=bootstrap`: under `ci/` what the
-pipelines read, under `platform/` what the cluster's components read through
-Vault Secrets Operator (CrowdSec's keys, the UI basic auth). It prints only
-paths and key counts, and it is safe to run again: a path a secret moved away
-from is removed.
-
-
-```sh
-cd ~/git/github/0xc0-homelab/workspace/vault
 export VAULT_ADDR=https://vault.int.0xc0.cc
-mise exec -- vault login -no-print          # a token that may write ci/
-mise exec -- scripts/load-from-sops
+mise exec -- vault login -no-print
+
+# A key shown once on a web page (a new API token):
+read -rs v && printf '%s' "$v" | mise exec -- vault kv patch -mount=ci infrastructure/proxmox api_token=- ; unset v
+# A key downloaded as a file (a GitHub App's private key):
+mise exec -- vault kv patch -mount=ci github/org-app private_key=- < ~/Downloads/app.private-key.pem && rm ~/Downloads/app.private-key.pem
+
+mise exec -- vault kv metadata put -mount=ci \
+  -custom-metadata=owner=operator -custom-metadata=rotated_at="$(date +%F)" infrastructure/proxmox
+
 rm -f ~/.vault-token
 ```
 
-Then the operator rotates each secret by hand, here, and every consumer
-follows.
+Every consumer follows on its own: the pipelines read Vault on every run, and
+Vault Secrets Operator refreshes the cluster's Secrets within its refresh
+interval. A credential that also lives with its provider (an API token, an
+App key) is revoked there once the new one is in Vault and a run has used it.
+
+## When the cluster or Vault is down
+
+Every secret lives in Vault and nowhere else, so with Vault down no pipeline
+runs (plan, apply, ansible, packer), nor do the local scripts. That is the
+accepted risk (operator decision, 2026-10-01). Besides Vault, the only copy
+of the secrets is PBS's backup of the RKE2 servers, whose Longhorn volumes
+hold Vault's Raft data.
+
+1. **Sealed only** (the pods run, `vault status` says `Sealed true`), after a
+   restart: unseal each pod, as `gitops/platform/vault/README.md` says, "After
+   every restart: unseal".
+2. **The cluster is lost:** restore `vm-rke2-01`, `-02` and `-03` from PBS,
+   all three from the same night, so Raft's members agree. Start them one at
+   a time, and wait for each node Ready and Longhorn healthy (as
+   `scripts/rolling-reboot` checks in infrastructure). Then unseal each pod.
+3. **Check:**
+   - `vault status`: `Sealed false`, HA mode `active` on one pod.
+   - A CI login: re-run a PR's plan in any repo.
+   - The cluster's Secrets: every `VaultStaticSecret` `Ready`.
+4. Only then does anything else get fixed through the pipelines.
+
+The unseal keys and the root token are in the operator's password manager and
+offline, never in Vault, the cluster or a repo.
 
 ## How CI gets in
 
