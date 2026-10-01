@@ -87,4 +87,14 @@ kubernetes_roles = {
     service_accounts = ["vault-secrets"]
     policies         = ["longhorn-system"]
   }
+  "openobserve" = {
+    namespace        = "openobserve"
+    service_accounts = ["vault-secrets"]
+    policies         = ["openobserve"]
+  }
+  "openobserve-collector" = {
+    namespace        = "openobserve-collector"
+    service_accounts = ["vault-secrets"]
+    policies         = ["openobserve-collector"]
+  }
 }
