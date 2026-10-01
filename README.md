@@ -56,6 +56,10 @@ line:
 - The value on stdin, `key=-`, straight from where it is issued: a file
   downloaded from the provider, deleted right after, or `read -rs` for one shown
   on a web page. Never pasted into the command.
+- `key=-` stores stdin exactly, a trailing newline included. A generated value
+  (`openssl rand`, `pwgen`) ends in one: strip it with `tr -d '\n'`, or it
+  becomes part of the secret (OpenObserve's first root password, 2026-10-01).
+  `printf '%s'` adds none; a downloaded key file keeps its own, as it should.
 - `kv patch` changes one key and keeps the others; `kv put` writes a new
   secret whole. Then `rotated_at`, so the next rotation knows how old it is.
 
@@ -65,6 +69,8 @@ mise exec -- vault login -no-print
 
 # A key shown once on a web page (a new API token):
 read -rs v && printf '%s' "$v" | mise exec -- vault kv patch -mount=ci infrastructure/proxmox api_token=- ; unset v
+# A value generated here (a password): strip the trailing newline.
+openssl rand -base64 24 | tr -d '\n' | mise exec -- vault kv patch -mount=platform shared/openobserve-root password=-
 # A key downloaded as a file (a GitHub App's private key):
 mise exec -- vault kv patch -mount=ci github/org-app private_key=- < ~/Downloads/app.private-key.pem && rm ~/Downloads/app.private-key.pem
 
