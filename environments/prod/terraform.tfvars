@@ -50,12 +50,14 @@ jwt_roles = {
   }
 }
 
-# One KV v2 engine per trust boundary (operator decision, 2026-09-30). Paths
-# inside are <owner>/<name>: the namespace or the repo, then the secret.
+# One KV v2 engine per trust boundary (operator decision, 2026-09-30), and
+# ops/ for what only people use (2026-10-02). Paths inside are
+# <owner>/<name>: the namespace, the repo or the service, then the secret.
 kv_engines = {
   platform = "The cluster's shared services, one path per namespace, read by Vault Secrets Operator"
   apps     = "The applications, one path per namespace, read by Vault Secrets Operator"
   ci       = "The pipelines, one path per repo, read by that repo's CI jobs over JWT"
+  ops      = "What only people use: UI logins and passwords in clear. No machine has a policy on it"
 }
 
 # Vault Secrets Operator's way in, one role per namespace, named after it: the
