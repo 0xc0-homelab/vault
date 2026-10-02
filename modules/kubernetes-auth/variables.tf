@@ -11,9 +11,10 @@ variable "kubernetes_host" {
 }
 
 variable "roles" {
-  description = "Roles by name, one per namespace: its namespace, the service accounts it admits, the audience their tokens carry, its policies, and its TTL in seconds."
+  description = "Roles by name: the namespace it admits, or the labels the namespaces it admits carry; the service accounts it admits, the audience their tokens carry, its policies, and its TTL in seconds."
   type = map(object({
-    namespace        = string
+    namespace        = optional(string)
+    namespace_labels = optional(map(string))
     service_accounts = list(string)
     audience         = optional(string, "vault")
     policies         = list(string)
@@ -21,12 +22,16 @@ variable "roles" {
   }))
   default = {}
 
-  # A role admits one namespace and named service accounts, never a wildcard:
-  # "*" would let any namespace read what the role reads.
+  # A role admits one namespace, or the namespaces carrying its labels, and
+  # named service accounts: never a wildcard, which would let any namespace
+  # read what the role reads.
   validation {
     condition = alltrue([
-      for r in values(var.roles) : r.namespace != "*" && length(r.service_accounts) > 0 && !contains(r.service_accounts, "*")
+      for r in values(var.roles) :
+      (r.namespace == null) != (r.namespace_labels == null) &&
+      try(r.namespace != "*", true) && try(length(r.namespace_labels) > 0, true) &&
+      length(r.service_accounts) > 0 && !contains(r.service_accounts, "*")
     ])
-    error_message = "A Kubernetes auth role binds one namespace and named service accounts, never \"*\"."
+    error_message = "A Kubernetes auth role binds either one namespace or a non-empty set of namespace labels, and named service accounts, never \"*\"."
   }
 }

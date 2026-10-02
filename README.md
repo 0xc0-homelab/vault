@@ -51,6 +51,12 @@ Dynamic engines (`pki/`, `database/`) come when something needs them.
 - **Who reads:** a namespace's Kubernetes auth role reads only
   `<engine>/<namespace>/*`. A repo's JWT role reads only `ci/<repo>/*`. There
   is no global reader.
+- **Applications:** one role, `apps`, for every namespace labelled
+  `vault.0xc0.cc/apps: "true"`, and one templated policy
+  (`policies/apps.hcl.tftpl`): each login reads `apps/<its own namespace>/*`,
+  the namespace taken from its service account's token. A new application
+  needs no change here, only the label on its namespace in `gitops`. Whoever
+  can label a namespace there gives it its own `apps/` path, never another's.
 - **Shared secrets: one secret, one path, never a copy.** A credential more
   than one consumer uses lives once, at `<engine>/shared/<name>`
   (`platform/shared/cloudflare`, `ci/shared/rustfs`), and each consumer's

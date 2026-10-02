@@ -9,13 +9,20 @@ module "github_jwt" {
   roles    = var.jwt_roles
 }
 
-# One policy per file in policies/, named after it.
+# One policy per file in policies/, named after it. A .hcl.tftpl file is a
+# templated policy: it gets the Kubernetes auth method's accessor, to name a
+# login's entity alias (apps.hcl.tftpl).
 module "policies" {
-  source   = "../../modules/policy"
-  for_each = { for f in fileset("${path.root}/../../policies", "*.hcl") : trimsuffix(f, ".hcl") => f }
+  source = "../../modules/policy"
+  for_each = merge(
+    { for f in fileset("${path.root}/../../policies", "*.hcl") : trimsuffix(f, ".hcl") => f },
+    { for f in fileset("${path.root}/../../policies", "*.hcl.tftpl") : trimsuffix(f, ".hcl.tftpl") => f },
+  )
 
-  name   = each.key
-  policy = file("${path.root}/../../policies/${each.value}")
+  name = each.key
+  policy = endswith(each.value, ".tftpl") ? templatefile("${path.root}/../../policies/${each.value}", {
+    kubernetes_accessor = module.kubernetes_auth.accessor
+  }) : file("${path.root}/../../policies/${each.value}")
 }
 
 # How the cluster's workloads get in: Vault Secrets Operator, per namespace.

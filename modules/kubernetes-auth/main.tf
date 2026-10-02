@@ -20,7 +20,10 @@ resource "vault_kubernetes_auth_backend_config" "main" {
   kubernetes_host = var.kubernetes_host
 }
 
-# One role per namespace: the service accounts it admits, and its policies.
+# One role per namespace, or one for every namespace carrying a label (the
+# applications'): the service accounts it admits, and its policies. A label
+# selector needs Vault's own service account to read namespaces (gitops,
+# platform/vault).
 resource "vault_kubernetes_auth_backend_role" "main" {
   for_each = var.roles
 
@@ -28,8 +31,12 @@ resource "vault_kubernetes_auth_backend_role" "main" {
   role_name = each.key
 
   bound_service_account_names      = each.value.service_accounts
-  bound_service_account_namespaces = [each.value.namespace]
+  bound_service_account_namespaces = each.value.namespace == null ? null : [each.value.namespace]
   audience                         = each.value.audience
+
+  bound_service_account_namespace_selector = each.value.namespace_labels == null ? null : jsonencode({
+    matchLabels = each.value.namespace_labels
+  })
 
   token_policies = each.value.policies
   token_ttl      = each.value.token_ttl
