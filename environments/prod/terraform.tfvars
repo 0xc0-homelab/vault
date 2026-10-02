@@ -104,4 +104,9 @@ kubernetes_roles = {
     service_accounts = ["vault-secrets"]
     policies         = ["mariadb"]
   }
+  "mautic" = {
+    namespace        = "mautic"
+    service_accounts = ["vault-secrets"]
+    policies         = ["mautic"]
+  }
 }
