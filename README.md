@@ -104,7 +104,7 @@ mise exec -- vault login -no-print
 # A key shown once on a web page (a new API token):
 read -rs v && printf '%s' "$v" | mise exec -- vault kv patch -mount=ci infrastructure/proxmox api_token=- ; unset v
 # A value generated here (a password): strip the trailing newline.
-openssl rand -base64 24 | tr -d '\n' | mise exec -- vault kv patch -mount=platform shared/openobserve-root password=-
+openssl rand -base64 24 | tr -d '\n' | mise exec -- vault kv patch -mount=platform openobserve/root password=-
 # A key downloaded as a file (a GitHub App's private key):
 mise exec -- vault kv patch -mount=ci github/org-app private_key=- < ~/Downloads/app.private-key.pem && rm ~/Downloads/app.private-key.pem
 
