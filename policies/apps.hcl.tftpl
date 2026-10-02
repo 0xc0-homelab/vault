@@ -1,0 +1,12 @@
+# Every application's namespace, through Vault Secrets Operator (the apps
+# Kubernetes auth role, which admits the namespaces labelled
+# vault.0xc0.cc/apps): its own secrets, apps/<namespace>/*, and no other
+# namespace's. The namespace is the one in the login's entity alias, set by
+# Vault from the service account's token, never by the caller.
+#
+# A grant across namespaces is not made here but by name, in the reader's
+# own policy (mariadb.hcl).
+
+path "apps/data/{{identity.entity.aliases.${kubernetes_accessor}.metadata.service_account_namespace}}/*" {
+  capabilities = ["read"]
+}

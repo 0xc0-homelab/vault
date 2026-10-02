@@ -14,9 +14,10 @@ variable "jwt_roles" {
 }
 
 variable "kubernetes_roles" {
-  description = "Kubernetes auth roles, one per namespace, named after it: the namespace, its service accounts, their audience, its policies and TTL."
+  description = "Kubernetes auth roles, one per namespace and named after it, or one for the namespaces carrying a label: the namespace or the labels, its service accounts, their audience, its policies and TTL."
   type = map(object({
-    namespace        = string
+    namespace        = optional(string)
+    namespace_labels = optional(map(string))
     service_accounts = list(string)
     audience         = optional(string, "vault")
     policies         = list(string)

@@ -109,4 +109,12 @@ kubernetes_roles = {
     service_accounts = ["vault-secrets"]
     policies         = ["mautic"]
   }
+  # Every application's namespace: the ones labelled vault.0xc0.cc/apps.
+  # Its policy reads only apps/<the login's namespace>/*, so one role serves
+  # them all and a new application needs nothing here.
+  "apps" = {
+    namespace_labels = { "vault.0xc0.cc/apps" = "true" }
+    service_accounts = ["vault-secrets"]
+    policies         = ["apps"]
+  }
 }
