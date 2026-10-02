@@ -24,12 +24,26 @@ for one never reaches another:
 | `platform/` | the cluster's shared services | Vault Secrets Operator, per namespace |
 | `apps/` | the applications | Vault Secrets Operator, per namespace |
 | `ci/` | what the pipelines use (Proxmox, Cloudflare, RustFS, the runners' App) | each repo's CI jobs, over JWT |
+| `ops/` | what only people use: UI logins, passwords in clear | the operator; **no machine has a policy on it** |
 
 Dynamic engines (`pki/`, `database/`) come when something needs them.
 
-- **Paths:** `<engine>/<owner>/<name>`. The owner is the namespace, or the
-  repo under `ci/`, and it is what a policy scopes to. Everything is
-  lowercase and kebab-case: `platform/grafana/admin`, `ci/infrastructure/proxmox`.
+- **People or machines.** A secret a machine reads lives in `platform/`,
+  `apps/` or `ci/`. One only a person uses lives in `ops/`, and no machine is
+  ever granted it. When both need the same credential, each gets its own form:
+  the machine the bcrypt or the htpasswd line (`platform/argocd/admin`,
+  `platform/shared/ui-basic-auth`), the person the password (`ops/argocd/admin`,
+  `ops/ui-basic-auth`). A secret a machine must read even though a person logs
+  in with it is a machine's (`platform/openobserve/root`: OpenObserve reads it
+  at its first start).
+- **One service, one path.** A secret belongs to the service it is for, not
+  to whoever reads it: ArgoCD's is `platform/argocd/admin`, even though
+  infrastructure's CI writes it into the cluster. A reader across a boundary is
+  granted it by name, with the reason in its policy (`ci-infrastructure.hcl`).
+- **Paths:** `<engine>/<owner>/<name>`. The owner is the namespace, the repo
+  under `ci/`, or the service under `ops/`, and it is what a policy scopes to.
+  Everything is lowercase and kebab-case: `platform/grafana/admin`,
+  `ci/infrastructure/proxmox`.
 - **Keys inside a secret:** `snake_case`, so they map to a Kubernetes Secret
   as they are: `username`, `password`, `api_token`.
 - **Metadata:** every secret carries `custom_metadata` `owner` and
@@ -39,12 +53,32 @@ Dynamic engines (`pki/`, `database/`) come when something needs them.
   is no global reader.
 - **Shared secrets: one secret, one path, never a copy.** A credential more
   than one consumer uses lives once, at `<engine>/shared/<name>`
-  (`platform/shared/cloudflare-dns`, `ci/shared/rustfs`), and each consumer's
+  (`platform/shared/cloudflare`, `ci/shared/rustfs`), and each consumer's
   policy grants it by name, next to its own paths. Never `shared/*` whole:
   who shares what is written in the policies, and reviewed in their PRs.
-  Rotating it is one write, and every consumer follows.
+  Rotating it is one write, and every consumer follows. The one copy across
+  engines is Cloudflare's token, in `ci/shared` and `platform/shared`, written
+  together.
 - **Who writes:** whoever holds the secret, the operator or a rotation job.
   Never this repo: it defines engines, roles and policies, never values.
+
+## Recovery credentials: outside Vault
+
+What restoring Vault takes cannot live only in Vault. These are kept in the
+operator's password manager and in an offline copy, never in Vault, the
+cluster or a repo:
+
+| Credential | Why outside |
+|---|---|
+| Vault's five unseal keys, and its root token | Vault cannot open itself |
+| PBS: its `root`, and the Hetzner Storage Box it backs up to | the backups Vault is restored from |
+| Hetzner Robot, and the Rescue system | the node's way back in |
+| Proxmox `root@pam` | restoring the VMs, Vault's among them |
+| RustFS admin | the OpenTofu state, before any pipeline runs |
+| The Cloudflare and GitHub accounts, and their 2FA | WARP, the tunnels and the pipelines all depend on them |
+
+The section below, "When the cluster or Vault is down", is the order to use
+them in.
 
 ## Writing or rotating a secret
 
