@@ -1,9 +1,6 @@
-# The vault repo's CI, from main: it manages Vault's configuration (auth
-# methods and their roles, policies, secret engines). It is not granted the
-# secrets stored in them, but for its own state's, but it can rewrite any policy, its own included: it
-# is effectively an admin. What guards it is its role, which admits only main,
-# from .github's reusable workflow on main, inside the production environment
-# that waits for the operator's approval.
+# No stored secret, but it can rewrite any policy, its own included: it is
+# effectively an admin, guarded by its role (main only, behind the operator's
+# approval).
 
 path "sys/auth" {
   capabilities = ["read"]

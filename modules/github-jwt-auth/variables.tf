@@ -19,8 +19,7 @@ variable "roles" {
   description = "Roles by name: the claims a token must match exactly, the policies it gets, and its TTL in seconds."
   type = map(object({
     bound_claims = map(string)
-    # "string": every claim must match exactly; "glob": * matches, in every
-    # claim of the role.
+    # "string": exact match; "glob": * matches, in every claim of the role.
     claims_type = optional(string, "string")
     policies    = list(string)
     token_ttl   = optional(number, 1200)

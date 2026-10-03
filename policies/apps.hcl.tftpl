@@ -1,20 +1,13 @@
-# Every application's namespace, through Vault Secrets Operator (the apps
-# Kubernetes auth role, which admits the namespaces labelled
-# vault.0xc0.cc/apps): its own secrets, apps/<namespace>/*, and no other
-# namespace's. The namespace is the one in the login's entity alias, set by
-# Vault from the service account's token, never by the caller.
-#
-# A grant across namespaces is not made here but by name, in the reader's
-# own policy (mariadb.hcl).
+# The namespace comes from the login's entity alias, set by Vault from the
+# service account's token, never by the caller. A grant across namespaces goes
+# in the reader's own policy (mariadb.hcl).
 
 path "apps/data/{{identity.entity.aliases.${kubernetes_accessor}.metadata.service_account_namespace}}/*" {
   capabilities = ["read"]
 }
 
-# OpenObserve's RUM client token: one per organization, so one for every
-# application with a frontend, kept once (gitops, apps/*/vault-secrets.yaml).
-# Granted to all of them by name because it is public by design: it ships in
-# every visitor's JavaScript.
+# OpenObserve's RUM client token, one per organization: granted to every
+# application because it ships in every visitor's JavaScript anyway.
 path "apps/data/shared/openobserve-rum" {
   capabilities = ["read"]
 }

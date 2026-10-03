@@ -1,6 +1,4 @@
-# The vault repo's CI, planning a PR: it reads the configuration it manages
-# (its auth methods, JWT and Kubernetes, the policies, the mounts), to diff
-# it, and changes nothing. No secret, but for its own state's.
+# A PR's plan: reads the configuration to diff it, and changes nothing.
 
 path "sys/auth" {
   capabilities = ["read"]

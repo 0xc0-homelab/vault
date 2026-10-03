@@ -1,7 +1,3 @@
-# The prod configuration of the cluster's Vault. This root only calls modules
-# from ../../modules; resources live there.
-
-# How the CI gets in: GitHub Actions' OIDC tokens.
 module "github_jwt" {
   source = "../../modules/github-jwt-auth"
 
@@ -9,9 +5,8 @@ module "github_jwt" {
   roles    = var.jwt_roles
 }
 
-# One policy per file in policies/, named after it. A .hcl.tftpl file is a
-# templated policy: it gets the Kubernetes auth method's accessor, to name a
-# login's entity alias (apps.hcl.tftpl).
+# A .hcl.tftpl policy gets the Kubernetes auth accessor, to name a login's
+# entity alias (apps.hcl.tftpl).
 module "policies" {
   source = "../../modules/policy"
   for_each = merge(
@@ -25,7 +20,6 @@ module "policies" {
   }) : file("${path.root}/../../policies/${each.value}")
 }
 
-# How the cluster's workloads get in: Vault Secrets Operator, per namespace.
 module "kubernetes_auth" {
   source = "../../modules/kubernetes-auth"
 
