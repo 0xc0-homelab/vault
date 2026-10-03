@@ -15,7 +15,7 @@ permissions:
 
 jobs:
   plan:
-    uses: 0xc0-homelab/.github/.github/workflows/tofu-plan.yml@main
+    uses: 0xc0-labs/.github/.github/workflows/tofu-plan.yml@main
     with:
       working-directory: environments/prod
       paths: '^(environments/|modules/|policies/|mise\.toml$|\.github/workflows/(plan|apply)\.yml$)'
