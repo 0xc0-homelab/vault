@@ -155,7 +155,7 @@ offline, never in Vault, the cluster or a repo.
 
 No Vault credential is stored anywhere. Each job logs in with the OIDC token
 GitHub issues it (JWT auth, `hashicorp/vault-action`, in the reusable tofu
-workflows in `0xc0-homelab/.github`):
+workflows in `0xc0-labs/.github`):
 
 | Role | Who | Policy |
 |---|---|---|
