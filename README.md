@@ -54,7 +54,9 @@ Dynamic engines (`pki/`, `database/`) come when something needs them.
 - **Applications:** one role, `apps`, for every namespace labelled
   `vault.0xc0.cc/apps: "true"`, and one templated policy
   (`policies/apps.hcl.tftpl`): each login reads `apps/<its own namespace>/*`,
-  the namespace taken from its service account's token. A new application
+  the namespace taken from its service account's token. Plus one shared path
+  by name, `apps/shared/openobserve-rum`: OpenObserve's RUM client token, one
+  per organization and public by design. A new application
   needs no change here, only the label on its namespace in `gitops`. Whoever
   can label a namespace there gives it its own `apps/` path, never another's.
 - **Shared secrets: one secret, one path, never a copy.** A credential more
