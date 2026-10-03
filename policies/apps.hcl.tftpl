@@ -10,3 +10,11 @@
 path "apps/data/{{identity.entity.aliases.${kubernetes_accessor}.metadata.service_account_namespace}}/*" {
   capabilities = ["read"]
 }
+
+# OpenObserve's RUM client token: one per organization, so one for every
+# application with a frontend, kept once (gitops, apps/*/vault-secrets.yaml).
+# Granted to all of them by name because it is public by design: it ships in
+# every visitor's JavaScript.
+path "apps/data/shared/openobserve-rum" {
+  capabilities = ["read"]
+}
