@@ -22,5 +22,6 @@ offby1.cc and app-*`. The design is in the workspace's `docs/design.md`.
 - Nothing changes Vault from a laptop but the one bootstrap (README.md): the
   first run, by the operator, with the root token, over WARP. From then on,
   only the pipeline. Plans by hand go over WARP with a short-lived token.
-- The root token is for that bootstrap only, then revoked.
+- The root token is for that bootstrap and recovery only; it is kept with the
+  unseal keys, outside Vault, never revoked.
 - Tools come from `mise.toml`, pinned. Nothing system-wide.
