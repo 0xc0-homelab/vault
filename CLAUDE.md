@@ -3,12 +3,7 @@
 The OpenTofu configuration of the cluster's Vault: auth methods and roles,
 policies, secret engines. Vault is deployed by `gitops` (`platform/vault`), so
 this repo is downstream of it: `.github → infrastructure → gitops → vault →
-app-*`.
-
-## CURRENT PHASE: 3 (Platform)
-
-Phase 3 brings Vault, OIDC and the move off SOPS (.github#6). See the
-workspace `docs/design.md`.
+offby1.cc and app-*`. The design is in the workspace's `docs/design.md`.
 
 ## Hard rules
 

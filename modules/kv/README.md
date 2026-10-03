@@ -2,7 +2,7 @@
 
 A KV secrets engine, version 2, with `prevent_destroy`: recreating a mount
 deletes every secret in it. Vault Secrets Operator reads them into the
-cluster.
+cluster, and the pipelines read `ci/` over JWT.
 
 <!-- BEGIN_TF_DOCS -->
 ## Requirements

@@ -4,9 +4,10 @@ Vault's JWT auth method for GitHub Actions. A job logs in with the OIDC token
 GitHub issues it: `hashicorp/vault-action` with `method: jwt`, asking GitHub
 for the `audience` here. Vault checks the token against a role:
 
-- `bound_claims` must match exactly. Every role binds `repository`, and the
-  module refuses one that does not, or any repository on GitHub could log in.
-  Bind `ref` and `environment` too for a role that writes.
+- `bound_claims` must match, exactly or as globs (`claims_type = "glob"`).
+  Every role binds `repository`, never as a glob, and the module refuses one
+  that does not, or any repository on GitHub could log in. Bind `ref` and
+  `environment` too for a role that writes.
 - `user_claim` is `job_workflow_ref`: one entity per calling workflow.
 - The token lives `token_ttl` seconds and never renews past it.
 

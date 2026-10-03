@@ -6,7 +6,7 @@ roles, policies, secret engines. Vault itself is deployed by `gitops`
 
 ```
 environments/prod/   the root: only calls modules
-modules/             github-jwt-auth, policy, kv
+modules/             github-jwt-auth, kubernetes-auth, policy, kv
 policies/            one ACL policy per file, named after it
 scripts/             tofu (local runs, credentials from Vault)
 ```
@@ -26,7 +26,8 @@ for one never reaches another:
 | `ci/` | what the pipelines use (Proxmox, Cloudflare, RustFS, the runners' App) | each repo's CI jobs, over JWT |
 | `ops/` | what only people use: UI logins, passwords in clear | the operator; **no machine has a policy on it** |
 
-Dynamic engines (`pki/`, `database/`) come when something needs them.
+There is no dynamic engine (`pki/`, `database/`); one is added when something
+needs it.
 
 - **People or machines.** A secret a machine reads lives in `platform/`,
   `apps/` or `ci/`. One only a person uses lives in `ops/`, and no machine is
@@ -160,7 +161,7 @@ workflows in `0xc0-labs/.github`):
 | Role | Who | Policy |
 |---|---|---|
 | `terraform-plan` | any ref of this repo, through `.github`'s plan workflow on `main`: a PR's plan | `terraform-plan`: reads its own configuration |
-| `terraform` | `main`, through `.github`'s run workflow on `main`, inside the `production` environment, after the operator's approval | `terraform`: manages the configuration |
+| `terraform` | `main`, through `.github`'s apply workflow on `main`, inside the `production` environment, after the operator's approval | `terraform`: manages the configuration |
 
 The other repos' CI reads its secrets with one role per repo:
 
@@ -197,20 +198,15 @@ export VAULT_ADDR=https://vault.int.0xc0.cc
 read -rs VAULT_TOKEN && export VAULT_TOKEN
 
 scripts/tofu prod init
-scripts/tofu prod plan      # read it: the JWT auth, its two roles, the two policies, the KV engine
+scripts/tofu prod plan      # read it: the auth methods, their roles, the policies, the KV engines
 scripts/tofu prod apply
 
 unset VAULT_TOKEN
 ```
 
 Then check the CI gets in: open a PR here. Its plan logs in as
-`terraform-plan` and shows no changes. The root token is not needed again.
-Revoke it once there is another admin way in (OIDC, next).
-
-The first engine, `secret/`, gave way to one per boundary before it held
-anything. `prevent_destroy` keeps tofu from removing it, so the operator
-disables it by hand first, once, over WARP: `vault secrets disable secret`.
-The next plan finds it gone, drops it from the state, and destroys nothing.
+`terraform-plan` and shows no changes. The root token is not needed again;
+it is kept outside Vault with the unseal keys (Recovery credentials).
 
 ## Running by hand
 

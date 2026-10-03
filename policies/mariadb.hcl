@@ -6,7 +6,7 @@ path "platform/data/mariadb/*" {
   capabilities = ["read"]
 }
 
-# Mautic's database user (gitops#73).
+# Mautic's database user.
 path "apps/data/mautic/database" {
   capabilities = ["read"]
 }
