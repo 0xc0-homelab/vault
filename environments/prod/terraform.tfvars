@@ -9,20 +9,23 @@ jwt_audience = "https://vault.int.0xc0.cc"
 # tokens). A PR plans read-only from any ref; only main, inside the production
 # environment that waits for the operator's approval, may write. Each role
 # also binds the reusable workflow, as it is on .github's main.
+# While the org moves from 0xc0-homelab to 0xc0-labs (workspace issue), each
+# repository and workflow claim takes either name: GitHub's tokens carry the
+# new one from the moment of the rename. The old one goes once it is done.
 jwt_roles = {
   "terraform-plan" = {
     bound_claims = {
-      repository       = "0xc0-homelab/vault"
-      job_workflow_ref = "0xc0-homelab/.github/.github/workflows/tofu-plan.yml@refs/heads/main"
+      repository       = "0xc0-homelab/vault,0xc0-labs/vault"
+      job_workflow_ref = "0xc0-homelab/.github/.github/workflows/tofu-plan.yml@refs/heads/main,0xc0-labs/.github/.github/workflows/tofu-plan.yml@refs/heads/main"
     }
     policies = ["terraform-plan"]
   }
   "terraform" = {
     bound_claims = {
-      repository       = "0xc0-homelab/vault"
+      repository       = "0xc0-homelab/vault,0xc0-labs/vault"
       ref              = "refs/heads/main"
       environment      = "production"
-      job_workflow_ref = "0xc0-homelab/.github/.github/workflows/tofu-apply.yml@refs/heads/main"
+      job_workflow_ref = "0xc0-homelab/.github/.github/workflows/tofu-apply.yml@refs/heads/main,0xc0-labs/.github/.github/workflows/tofu-apply.yml@refs/heads/main"
     }
     policies = ["terraform"]
   }
@@ -35,16 +38,16 @@ jwt_roles = {
   "github" = {
     claims_type = "glob"
     bound_claims = {
-      repository       = "0xc0-homelab/.github"
-      job_workflow_ref = "0xc0-homelab/.github/.github/workflows/*@refs/heads/main"
+      repository       = "0xc0-homelab/.github,0xc0-labs/.github"
+      job_workflow_ref = "0xc0-homelab/.github/.github/workflows/*@refs/heads/main,0xc0-labs/.github/.github/workflows/*@refs/heads/main"
     }
     policies = ["ci-github"]
   }
   "infrastructure" = {
     claims_type = "glob"
     bound_claims = {
-      repository       = "0xc0-homelab/infrastructure"
-      job_workflow_ref = "0xc0-homelab/.github/.github/workflows/*@refs/heads/main"
+      repository       = "0xc0-homelab/infrastructure,0xc0-labs/infrastructure"
+      job_workflow_ref = "0xc0-homelab/.github/.github/workflows/*@refs/heads/main,0xc0-labs/.github/.github/workflows/*@refs/heads/main"
     }
     policies = ["ci-infrastructure"]
   }
