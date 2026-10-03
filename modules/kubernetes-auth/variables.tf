@@ -22,9 +22,7 @@ variable "roles" {
   }))
   default = {}
 
-  # A role admits one namespace, or the namespaces carrying its labels, and
-  # named service accounts: never a wildcard, which would let any namespace
-  # read what the role reads.
+  # A wildcard would let any namespace read what the role reads.
   validation {
     condition = alltrue([
       for r in values(var.roles) :

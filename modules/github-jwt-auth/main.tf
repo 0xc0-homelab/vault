@@ -1,7 +1,3 @@
-# JWT auth for GitHub Actions: a job logs in with the OIDC token GitHub gives
-# it, and Vault checks its claims against a role. No Vault credential is
-# stored anywhere.
-
 resource "vault_jwt_auth_backend" "main" {
   path               = var.path
   description        = "GitHub Actions OIDC tokens"
@@ -24,7 +20,7 @@ resource "vault_jwt_auth_backend_role" "main" {
   bound_audiences   = [var.audience]
   bound_claims_type = each.value.claims_type
   bound_claims      = each.value.bound_claims
-  # One entity per calling workflow: the reusable workflow and its ref.
+  # One entity per calling workflow.
   user_claim = "job_workflow_ref"
 
   token_policies = each.value.policies

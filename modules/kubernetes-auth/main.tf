@@ -1,9 +1,3 @@
-# Kubernetes auth: a workload logs in with its service account's token, and
-# Vault checks it with the cluster's TokenReview. Vault runs in that cluster,
-# so it uses its own service account and CA for that (the chart's auth
-# delegator binding, gitops platform/vault): nothing to configure but the
-# address. Vault Secrets Operator logs in this way for each namespace.
-
 resource "vault_auth_backend" "main" {
   type        = "kubernetes"
   path        = var.path
@@ -15,14 +9,14 @@ resource "vault_auth_backend" "main" {
   }
 }
 
+# Vault runs in the cluster and reviews tokens with its own service account and
+# CA (gitops, platform/vault): only the address is set.
 resource "vault_kubernetes_auth_backend_config" "main" {
   backend         = vault_auth_backend.main.path
   kubernetes_host = var.kubernetes_host
 }
 
-# One role per namespace, or one for every namespace carrying a label (the
-# applications'): the service accounts it admits, and its policies. A label
-# selector needs Vault's own service account to read namespaces (gitops,
+# A label selector needs Vault's service account to read namespaces (gitops,
 # platform/vault).
 resource "vault_kubernetes_auth_backend_role" "main" {
   for_each = var.roles
